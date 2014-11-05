@@ -1,5 +1,6 @@
 package main.java.cpsc441.doNOTmodify;
 
+
 public class Util {
 	private Util() {
 	}
