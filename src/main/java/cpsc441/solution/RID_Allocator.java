@@ -8,7 +8,7 @@ package main.java.cpsc441.solution;
  *
  */
 public class RID_Allocator {
-	private final static int MAX_ROUTERS = 10;
+	public final static int MAX_ROUTERS = 10;
 	private static boolean router_ids[] = new boolean[MAX_ROUTERS];
 	
 	public static boolean alloc_rid(int rid) {
