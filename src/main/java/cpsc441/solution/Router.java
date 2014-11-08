@@ -1,8 +1,10 @@
-package main.java.cpsc441.solution;
+package cpsc441.solution;
 
 import java.io.*;
 import java.net.*;
-import main.java.cpsc441.doNOTmodify.*;
+import java.util.Properties;
+
+import cpsc441.doNOTmodify.*;
 
 public class Router implements Runnable {
 	
@@ -17,18 +19,33 @@ public class Router implements Runnable {
 	private boolean[] isNeighbor = new boolean[RID_Allocator.MAX_ROUTERS];
 	private int DV[][] = new int[RID_Allocator.MAX_ROUTERS][RID_Allocator.MAX_ROUTERS];
 	private int nexthops[] = new int[RID_Allocator.MAX_ROUTERS];
+	private InetAddress NEM_HOST;
+	private int NEM_PORT;
+	private ILogFactory logFactory;
 	
-    public Router(int rid, IUDPSocket sock, ILogFactory logFactory) {
-    	NEM_ID = HelperUtils.getNemId();
-    	ARQ_TIMER = HelperUtils.getArqTimer();
-    	COST_INFTY = HelperUtils.getCostInfty();
+	private final int SEQNUM_MAX = 1000;
+	
+    public Router(int rid, IUDPSocket sock, ILogFactory logFactory, InetAddress NEM_HOST, int NEM_PORT) {
+    	try {
+			Properties properties = new Properties();
+			properties.load(new FileReader("config.txt"));
+			NEM_ID = Integer.parseInt(properties.getProperty("NEM_ID", "1000"));
+			ARQ_TIMER = Integer.parseInt(properties.getProperty("ARQ_TIMER", "300"));
+			COST_INFTY = Integer.parseInt(properties.getProperty("COST_INFTY", "999"));
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+		}
+    	
     	this.sock = sock;
     	try {
 			sock.setSoTimeout(ARQ_TIMER);
 		} catch (SocketException e) {
 			System.out.println("Unable to set socket timeout");
 		}
+    	this.NEM_HOST = NEM_HOST;
+    	this.NEM_PORT = NEM_PORT;
     	this.rid = rid;
+    	this.logFactory = logFactory;
     	initDV();
     	initNeighbor();
     	initNextHop();
@@ -56,10 +73,21 @@ public class Router implements Runnable {
     }
     
     /**
-     * Function to increment seqnum
+     * increment seqnum, warp when reached SEQNUM_MAX
      */
     private void incrementSeqnum() {
-    	
+    	for (int i = 0; i < RID_Allocator.MAX_ROUTERS; i ++) {
+    		seqnum[i]++;
+    		if (seqnum[i] > SEQNUM_MAX) seqnum[i] = 0;
+    	}
+    }
+    
+    private void send_packet(DVRInfo packet) throws IOException {
+    	byte [] data = packet.getBytes();
+        DatagramPacket pkt = new DatagramPacket(data, data.length);
+        pkt.setAddress(NEM_HOST);
+        pkt.setPort(NEM_PORT);
+        sock.send(packet);
     }
     
     /**
@@ -92,7 +120,7 @@ public class Router implements Runnable {
 			snd_packet.mincost = DV[rid];
 			try {
 				if (log != null) log.printf("[%d] send %s]\n", rid, snd_packet);
-				sock.send(snd_packet);
+				send_packet(snd_packet);
 			} catch (IOException e) {
 				System.out.println("Unable to send DV to neighbor " +neighbors[v]);
 			}
@@ -116,7 +144,8 @@ public class Router implements Runnable {
     	PrintStream logStream = null;
     	PrintWriter log = null;
     	try {
-			logStream = new LogFactory().newLogFile((new File("Router"+rid+".log")));
+    		String filepath = "./Router" + rid + ".log";
+			logStream = logFactory.newLogFile((new File(filepath)));
 			log = new PrintWriter(logStream);
 		} catch (FileNotFoundException e2) {
 			System.out.println("Unable to create log file");
@@ -133,7 +162,7 @@ public class Router implements Runnable {
     	while (!success) {
     		try {
     			if (log != null) log.printf("[%d] send %s]\n", rid, snd_packet);
-    			sock.send(snd_packet);
+    			send_packet(snd_packet);
     			rcv_packet = sock.receive();
     			if (log != null) log.printf("[%d] receive %s]\n", rid, rcv_packet);
     			if (rcv_packet.sourceid == NEM_ID 
@@ -169,11 +198,13 @@ public class Router implements Runnable {
 				if (rcv_packet.destid == rid) {
 					if (log != null) log.printf("[%d] receive %s]\n", rid, rcv_packet);
 					if (isNeighbor[rcv_packet.sourceid] && rcv_packet.type == DVRInfo.PKT_ROUTE) {
+						if (rcv_packet.seqnum == seqnum[rcv_packet.sourceid]) continue;
+						else seqnum[rcv_packet.sourceid] = rcv_packet.seqnum;
 						// calculate DV and send to neighbors if DV changed
 						DV[rcv_packet.sourceid] = rcv_packet.mincost;
 						if (this.recalculateDV()) {
-							// increment seq if DV changed
-							
+							// increment seqnum if DV changed, then sent to neighbours
+							incrementSeqnum();
 							this.sendDVToNeighbors(log);
 						}
 					}

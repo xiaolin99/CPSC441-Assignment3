@@ -1,7 +1,7 @@
 /**
  * 
  */
-package main.java.cpsc441.solution;
+package cpsc441.solution;
 
 /**
  * @author Xiao
