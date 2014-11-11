@@ -11,7 +11,7 @@ public class Router implements Runnable {
 	private int NEM_ID;
 	private int ARQ_TIMER;
 	private int COST_INFTY;
-	private IUDPSocket sock;
+	private My_UDPSocket sock;
 	private int rid;
 	private int[] seqnum = new int[RID_Allocator.MAX_ROUTERS];
 	private int numNeighbors;
@@ -19,13 +19,11 @@ public class Router implements Runnable {
 	private boolean[] isNeighbor = new boolean[RID_Allocator.MAX_ROUTERS];
 	private int DV[][] = new int[RID_Allocator.MAX_ROUTERS][RID_Allocator.MAX_ROUTERS];
 	private int nexthops[] = new int[RID_Allocator.MAX_ROUTERS];
-	private InetAddress NEM_HOST;
-	private int NEM_PORT;
 	private ILogFactory logFactory;
 	
 	private final int SEQNUM_MAX = 1000;
 	
-    public Router(int rid, IUDPSocket sock, ILogFactory logFactory, InetAddress NEM_HOST, int NEM_PORT) {
+    public Router(int rid, My_UDPSocket sock, ILogFactory logFactory) {
     	try {
 			Properties properties = new Properties();
 			properties.load(new FileReader("config.txt"));
@@ -42,8 +40,6 @@ public class Router implements Runnable {
 		} catch (SocketException e) {
 			System.out.println("Unable to set socket timeout");
 		}
-    	this.NEM_HOST = NEM_HOST;
-    	this.NEM_PORT = NEM_PORT;
     	this.rid = rid;
     	this.logFactory = logFactory;
     	initDV();
@@ -82,14 +78,6 @@ public class Router implements Runnable {
     	}
     }
     
-    private void send_packet(DVRInfo packet) throws IOException {
-    	byte [] data = packet.getBytes();
-        DatagramPacket pkt = new DatagramPacket(data, data.length);
-        pkt.setAddress(NEM_HOST);
-        pkt.setPort(NEM_PORT);
-        sock.send(packet);
-    }
-    
     /**
      * recalculate DV
      * @return boolean - true if DV has changed
@@ -120,7 +108,7 @@ public class Router implements Runnable {
 			snd_packet.mincost = DV[rid];
 			try {
 				if (log != null) log.printf("[%d] send %s]\n", rid, snd_packet);
-				send_packet(snd_packet);
+				sock.send(snd_packet);
 			} catch (IOException e) {
 				System.out.println("Unable to send DV to neighbor " +neighbors[v]);
 			}
@@ -162,7 +150,7 @@ public class Router implements Runnable {
     	while (!success) {
     		try {
     			if (log != null) log.printf("[%d] send %s]\n", rid, snd_packet);
-    			send_packet(snd_packet);
+    			sock.send(snd_packet);
     			rcv_packet = sock.receive();
     			if (log != null) log.printf("[%d] receive %s]\n", rid, rcv_packet);
     			if (rcv_packet.sourceid == NEM_ID 

@@ -35,9 +35,10 @@ public class Main {
 		}
 
         //You shouldn't need to modify this code.
-        IUDPSocket sock = new UDPSocket(s);
+        My_UDPSocket sock = new My_UDPSocket(s);
+        sock.setDest(IP, port);
         ILogFactory logFactory = new LogFactory();
-        Router r = new Router(rid, sock, logFactory, IP, port);
+        Router r = new Router(rid, sock, logFactory);
         r.run();
     }
 
