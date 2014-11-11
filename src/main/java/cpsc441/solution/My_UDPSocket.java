@@ -2,7 +2,7 @@ package cpsc441.solution;
 
 import java.io.IOException;
 import java.net.*;
-import cpsc441.doNOTmodify.*
+import cpsc441.doNOTmodify.*;
 
 public class My_UDPSocket{
 	
@@ -15,7 +15,7 @@ public class My_UDPSocket{
 
     public My_UDPSocket(DatagramSocket sock) {
         this.sock = sock;
-        dest_IP = InetAddress.getLocalHost();
+        dest_IP = null;
         dest_port = 5555;
     }
     

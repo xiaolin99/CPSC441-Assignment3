@@ -3,7 +3,6 @@ package cpsc441.solution;
 import java.io.*;
 import java.net.*;
 import java.util.Properties;
-
 import cpsc441.doNOTmodify.*;
 
 public class Router implements Runnable {
@@ -185,6 +184,8 @@ public class Router implements Runnable {
 				// check if packet is intended for this router
 				if (rcv_packet.destid == rid) {
 					if (log != null) log.printf("[%d] receive %s]\n", rid, rcv_packet);
+					if (rcv_packet.type == DVRInfo.PKT_QUIT) break;
+					if (rcv_packet.sourceid == NEM_ID) continue;
 					if (isNeighbor[rcv_packet.sourceid] && rcv_packet.type == DVRInfo.PKT_ROUTE) {
 						if (rcv_packet.seqnum == seqnum[rcv_packet.sourceid]) continue;
 						else seqnum[rcv_packet.sourceid] = rcv_packet.seqnum;
@@ -196,7 +197,7 @@ public class Router implements Runnable {
 							this.sendDVToNeighbors(log);
 						}
 					}
-					if (rcv_packet.type == DVRInfo.PKT_QUIT) break;
+					
 				}
 			} catch (SocketTimeoutException e1) {
 				// on timeout, resend to neighbors
@@ -211,6 +212,6 @@ public class Router implements Runnable {
 		log.close();
 		logStream.flush();
 		logStream.close();
-		Util.printdv(rid, DV[rid], nexthops);
+		System.out.println(Util.printdv(rid, DV[rid], nexthops));
     }
 }
