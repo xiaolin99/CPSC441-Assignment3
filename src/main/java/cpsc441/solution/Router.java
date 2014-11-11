@@ -88,10 +88,7 @@ public class Router implements Runnable {
      * increment seqnum, warp when reached SEQNUM_MAX
      */
     private void incrementSeqnum() {
-    	for (int i = 0; i < MAX_ROUTERS; i ++) {
-    		seqnum[i]++;
-    		if (seqnum[i] > SEQNUM_MAX) seqnum[i] = 0;
-    	}
+    	seqnum[rid] ++;
     }
     
     /**
@@ -216,7 +213,7 @@ public class Router implements Runnable {
 						// BONUS: check seqnum, if unchanged, skip loop
 						if (rcv_packet.seqnum == seqnum[rcv_packet.sourceid]) continue;
 						else seqnum[rcv_packet.sourceid] = rcv_packet.seqnum;
-						System.out.println("Neighbour's DV updated!");
+						System.out.println("Received New DV!");
 						if (log != null) log.printf("[%d] receive %s]\n", rid, rcv_packet);
 						// calculate DV and send to neighbors if DV changed
 						DV[rcv_packet.sourceid] = rcv_packet.mincost;

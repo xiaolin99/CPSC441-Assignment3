@@ -35,7 +35,7 @@ public class Main {
 		}
         port = Integer.parseInt(args[2]);
         try {
-			s = new DatagramSocket(5000+rid);
+			s = new DatagramSocket(50000+rid);
 		} catch (SocketException e) {
 			System.out.println("Unable to create socket - Router ID must be unique!");
 			System.exit(1);
