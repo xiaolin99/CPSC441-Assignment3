@@ -1,5 +1,11 @@
 package cpsc441.solution;
 
+/**
+ * CPSC441 - Assignment3
+ * This class is almost an exact copy of the UDPSocket class, but UDPSocket is broken, and we can't modify it, so I made this
+ * by Xiao Lin
+ */
+
 import java.io.IOException;
 import java.net.*;
 import cpsc441.doNOTmodify.*;

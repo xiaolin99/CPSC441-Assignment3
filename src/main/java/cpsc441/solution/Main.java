@@ -1,8 +1,14 @@
 package cpsc441.solution;
 
+/*
+ * CPSC441 - Assignment3 main
+ * by Xiao Lin
+ */
+
 import cpsc441.doNOTmodify.*;
 
 import java.net.*;
+
 
 public class Main {
 	
@@ -17,8 +23,9 @@ public class Main {
         	System.exit(1);
         }
         int rid = Integer.parseInt(args[0]);
-        if (!RID_Allocator.alloc_rid(rid)) {
-        	System.out.println("Router ID must be between 0 and MAX_ROUTER-1 and unique");
+        if (rid < 0 || rid >= DVRInfo.MAX_ROUTERS) {
+        	System.out.println("Router ID must be between 0 and MAX_ROUTER-1");
+        	System.exit(1);
         }
         try {
 			IP = InetAddress.getByName(args[1]);
@@ -30,7 +37,7 @@ public class Main {
         try {
 			s = new DatagramSocket(5000+rid);
 		} catch (SocketException e) {
-			System.out.println("Unable to create socket");
+			System.out.println("Unable to create socket - Router ID must be unique!");
 			System.exit(1);
 		}
 
